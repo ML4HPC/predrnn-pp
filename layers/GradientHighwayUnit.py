@@ -12,12 +12,10 @@ from torch.nn.modules.normalization import LayerNorm
 
 ##class GHU():
 class GHU(nn.Module):
-    def __init__(self, layer_name, filter_size, num_features, tln=False,
-                 initializer=0.001):
+    def __init__(self, filter_size, num_features, tln=False, initializer=0.001):
         """Initialize the Gradient Highway Unit.
         """
         super(GHU, self).__init__()
-        self.layer_name = layer_name
         self.filter_size = filter_size
         self.num_features = num_features
         self.layer_norm = tln
@@ -41,7 +39,7 @@ class GHU(nn.Module):
         else:
             raise ValueError('input tensor should be rank 4.')
         return torch.zeros([batch, height, width, num_features],
-                           dtype=inputs.dtype, device=inputs.device) 
+                           dtype=inputs.dtype, device=inputs.device)
 
     def forward(self, x, z):
         if z is None:
@@ -49,10 +47,12 @@ class GHU(nn.Module):
         z_concat = self.conv2d_z(z)
         x_concat = self.conv2d_x(x)
         if self.layer_norm:
-            x_concat = self.layernorm(x_concat.permute(0,2,3,1)).permute(0,-1,1,2)
-            z_concat = self.layernorm(z_concat.permute(0,2,3,1)).permute(0,-1,1,2)
+            x_concat = self.layernorm(x_concat.permute(
+                0, 2, 3, 1)).permute(0, -1, 1, 2)
+            z_concat = self.layernorm(z_concat.permute(
+                0, 2, 3, 1)).permute(0, -1, 1, 2)
         gates = x_concat + z_concat
-        p, u = torch.split(gates, 2, 3) # into 2 parts at axis=3
+        p, u = torch.split(gates, 2, 3)  # into 2 parts at axis=3
         p = torch.tanh(p)
         u = torch.sigmoid(u)
         z_new = u * p + (1-u) * z
