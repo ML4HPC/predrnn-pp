@@ -1,46 +1,45 @@
 import torch
 from torch import nn
 
-from layers import CausalLSTMCell, GHU
+from layers import CausalLSTMCell2d, CausalLSTMCell3d, GHU2d, GHU3d
 
 
 class CausalLSTMStack(nn.Module):
     def __init__(self,
-                 num_batch,
-                 num_height,
-                 num_width,
-                 nums_hidden,
                  filter_size,
+                 num_dims,
+                 channels,
                  layer_norm=True,
                  ):
         super(CausalLSTMStack, self).__init__()
 
-        self.num_batch = num_batch
-        self.num_height = num_height
-        self.num_width = num_width
-
         self.filter_size = filter_size
-        self.num_layers = len(nums_hidden) - 1
-        self.nums_hidden = nums_hidden
+        self.num_dims = num_dims
+        self.channels = channels
+        self.num_layers = len(channels)
 
         assert self.num_layers >= 2
 
-        self.lstms = []
-        for i, n_hidden in enumerate(nums_hidden):
-            n_hid_in, n_hid_out = nums_hidden[i:i+1]
+        if num_dims == 2:
+            clstmc, ghu = CausalLSTMCell2d, GHU2d
+        elif num_dims == 3:
+            clstmc, ghu = CausalLSTMCell3d, GHU3d
+        else:
+            raise ValueError()
 
-            cell = CausalLSTMCell(filter_size,
-                                  n_hid_in,
-                                  n_hid_out,
-                                  self.num_batch,
-                                  self.num_height,
-                                  self.num_width,
-                                  layer_norm=layer_norm)
+        self.lstms = []
+        for i in range(self.num_layers):
+            if i == 0:
+                n_hid_in, n_hid_out = channels[-1], channels[0]
+            else:
+                n_hid_in, n_hid_out = channels[i-1:i+1]
+
+            cell = clstmc(filter_size, n_hid_in, n_hid_out,
+                          layer_norm=layer_norm)
 
             self.lstms.append(cell)
 
-        self.ghu = GHU(filter_size, nums_hidden[0],
-                       tln=layer_norm)
+        self.ghu = ghu(filter_size, channels[0], layer_norm=layer_norm)
 
     def forward(self, x, h_prev=None, c_prev=None, m_prev=None, z_prev=None):
         if h_prev is None:
