@@ -27,7 +27,8 @@ class CausalLSTMStack(nn.Module):
         else:
             raise ValueError()
 
-        self.lstms = []
+        #self.lstms = []
+        self.lstms = nn.ModuleList()
         for i in range(self.num_layers):
             if i == 0:
                 n_hid_in, n_hid_out = channels[-1], channels[0]
@@ -37,6 +38,7 @@ class CausalLSTMStack(nn.Module):
             cell = clstmc(filter_size, n_hid_in, n_hid_out,
                           layer_norm=layer_norm)
 
+            #self.lstms.append(cell)
             self.lstms.append(cell)
 
         self.ghu = ghu(filter_size, channels[0], layer_norm=layer_norm)

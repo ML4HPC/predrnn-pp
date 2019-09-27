@@ -1,4 +1,4 @@
-__author__ = 'yunbo'
+#__author__ = 'yunbo'
 
 import os.path
 import time
