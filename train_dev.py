@@ -13,11 +13,11 @@ args.valid_data_paths = 'data/moving-mnist-example/moving-mnist-valid.npz'
 args.save_dir = 'checkpoints/mnist_predrnn_pp'
 args.img_width  = 64
 args.batch_size = 8
-args.patch_size = 1
+args.patch_size = 4 #1 
 args.seq_length = 19
-args.num_hidden = [128, 64, 64, 64]
+args.num_hidden = [128, 64, 64, 64, 16]
 args.num_layers = len(args.num_hidden)
-args.lr = 0.0001
+args.lr = 0.00001
 
 ##### load the train data
 train_input_handle, test_input_handle = datasets_factory.data_provider(
@@ -31,7 +31,7 @@ train_input_handle, test_input_handle = datasets_factory.data_provider(
 #print(type(train_input_handle), type(test_input_handle))
 
 model  = CausalLSTMStack(3, 2, args.num_hidden) #filter_size, num_dims
-decoder = torch.nn.Conv2d(1, 1, 1, 1)
+decoder = torch.nn.Conv2d(16, 16, 1, 1)
 # tmp = np.random.rand(8, 20, 16, 16, 16)
 
 
@@ -49,12 +49,15 @@ for itr in range(10000):
     ims = np.swapaxes(ims, 0, 1)
     h, c, m, z = [None]*4
     #print(ims.shape)# (20, 8, 16, 16, 16)
+    ims = np.swapaxes(ims, 2, 4)
+    #print(ims.shape)
+    #print(ims.shape)# (20, 8, 16, 16, 16)
     for t in range(args.seq_length):
         tmp = torch.Tensor(ims[t])
         tmp = tmp.cuda()
         h, c, m, z = model(tmp, h, c, m, z)
 
-    z = decoder(h[-1].permute(0,-1,1,2)).permute(0,2,3,1)
+    z = decoder(h[-1].permute(0,-1,1,2))#.permute(0,2,3,1)
     y = torch.Tensor(ims[-1])
     y = y.cuda()
     loss = loss_fn( z, y )
@@ -63,7 +66,7 @@ for itr in range(10000):
 
     #print(len(h), len(c), len(m), len(z))
     #print("h", h[-1].shape)
-    print("loss = ", loss.item())
+    print(loss.item())
 
 
 

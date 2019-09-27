@@ -33,9 +33,9 @@ class InputHandle:
                 (dat_1['input_raw_data'], dat_2['input_raw_data']), axis=0)
             self.data['output_raw_data'] = np.concatenate(
                 (dat_1['output_raw_data'], dat_2['output_raw_data']), axis=0)
-        for key in self.data.keys():
-            print(key)
-            print(self.data[key].shape)
+        #for key in self.data.keys():
+        #    print(key)
+        #    print(self.data[key].shape)
 
     def total(self):
         return self.data['clips'].shape[1]
